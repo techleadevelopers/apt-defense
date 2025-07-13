@@ -34,20 +34,42 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Simulated authentication logic
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: "Login Autorizado",
-        description: `Acesso concedido ao Sistema SOC - Nível ${userType.toUpperCase()}`,
+      // Make API call to authenticate user
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
       });
 
-      // Redirect based on user type
-      window.location.href = userType === 'admin' ? '/admin' : userType === 'analyst' ? '/soc-dashboard' : '/student-dashboard';
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Login Autorizado",
+          description: `Acesso concedido ao Sistema SOC - Nível ${userType.toUpperCase()}`,
+        });
+
+        // Store user data in localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Redirect based on user type - all users go to SOC dashboard
+        window.location.href = '/soc-dashboard';
+      } else {
+        toast({
+          title: "Acesso Negado",
+          description: data.error || "Credenciais inválidas. Verifique seus dados.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Acesso Negado",
-        description: "Credenciais inválidas. Verifique seus dados.",
+        description: "Erro de conexão. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -145,6 +167,7 @@ export default function LoginPage() {
                   value={formData.username}
                   onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
                   className="cyber-input bg-[var(--cyber-dark)]/50 border-gray-600 text-white placeholder-gray-500"
+                  style={{ color: 'white' }}
                   placeholder="Digite seu usuário"
                   required
                 />
@@ -162,6 +185,7 @@ export default function LoginPage() {
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                     className="cyber-input bg-[var(--cyber-dark)]/50 border-gray-600 text-white placeholder-gray-500 pr-10"
+                    style={{ color: 'white' }}
                     placeholder="Digite sua senha"
                     required
                   />
@@ -238,10 +262,8 @@ export default function LoginPage() {
               <p className="text-gray-400 text-sm mb-2">
                 Primeiro acesso ao Sistema SOC?
               </p>
-              <Link href="/auth/register">
-                <a className="text-[var(--cyber-cyan)] hover:text-cyan-400 font-semibold transition-colors">
-                  REGISTRAR-SE NO SISTEMA
-                </a>
+              <Link href="/auth/register" className="text-[var(--cyber-cyan)] hover:text-cyan-400 font-semibold transition-colors">
+                REGISTRAR-SE NO SISTEMA
               </Link>
             </div>
 

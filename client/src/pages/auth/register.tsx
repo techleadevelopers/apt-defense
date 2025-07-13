@@ -32,7 +32,7 @@ export default function RegisterPage() {
     firstName: "",
     lastName: "",
     institution: "",
-    role: "student" as 'student' | 'analyst' | 'admin'
+    role: "student" as 'student' | 'analyst'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -64,18 +64,37 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // Simulated registration logic
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Registro Concluído",
-        description: `Conta criada com sucesso! Bem-vindo ao SOC Defense Universe.`,
+      // Make API call to register user
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
       });
 
-      // Redirect to login
-      setTimeout(() => {
-        window.location.href = '/auth/login';
-      }, 1500);
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Registro Concluído",
+          description: `Conta criada com sucesso! Bem-vindo ao SOC Defense Universe.`,
+        });
+
+        // Redirect to login
+        setTimeout(() => {
+          window.location.href = '/auth/login';
+        }, 1500);
+      } else {
+        toast({
+          title: "Erro no Registro",
+          description: data.error || "Falha ao criar conta. Tente novamente.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: "Erro no Registro",
@@ -91,7 +110,6 @@ export default function RegisterPage() {
     switch (formData.role) {
       case 'student': return GraduationCap;
       case 'analyst': return Shield;
-      case 'admin': return Building;
     }
   };
 
@@ -144,11 +162,10 @@ export default function RegisterPage() {
                 <Label className="text-[var(--cyber-cyan)] text-sm font-semibold">
                   TIPO DE CONTA
                 </Label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {[
                     { type: 'student' as const, label: 'Estudante', icon: GraduationCap, desc: 'Aprendizado' },
-                    { type: 'analyst' as const, label: 'Analista', icon: Shield, desc: 'Operacional' },
-                    { type: 'admin' as const, label: 'Admin', icon: Building, desc: 'Gestão' }
+                    { type: 'analyst' as const, label: 'Analista', icon: Shield, desc: 'Operacional' }
                   ].map(({ type, label, icon: Icon, desc }) => (
                     <button
                       key={type}

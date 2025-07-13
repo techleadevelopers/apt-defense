@@ -111,6 +111,17 @@ export class MemStorage implements IStorage {
     this.currentId = 1;
     
     this.initializeData();
+    this.initializeUsers();
+  }
+
+  private initializeUsers() {
+    // Create admin user
+    const adminUser: User = {
+      id: this.currentId++,
+      username: 'admin',
+      password: 'admin'
+    };
+    this.users.set(adminUser.id, adminUser);
   }
 
   private initializeData() {
@@ -657,7 +668,33 @@ export class MemStorage implements IStorage {
     const id = this.currentId++;
     const user: User = { ...insertUser, id };
     this.users.set(id, user);
+    
+    // Initialize new user with zero progress in Learning Center
+    // This ensures they have access to all SOC features but start fresh in courses
+    await this.initializeNewUserLearningProgress(id);
+    
     return user;
+  }
+
+  private async initializeNewUserLearningProgress(userId: number): Promise<void> {
+    // Initialize all courses with 0% progress for new users
+    const courses = await this.getCourses();
+    
+    for (const course of courses) {
+      const progressKey = `${userId}-${course.id}`;
+      const initialProgress: StudentProgress = {
+        id: this.currentId++,
+        userId,
+        courseId: course.id,
+        moduleId: null,
+        progress: 0,
+        isCompleted: false,
+        timeSpent: 0,
+        lastAccessed: new Date(),
+        completedAt: null
+      };
+      this.studentProgress.set(progressKey, initialProgress);
+    }
   }
 
   // Threat methods
